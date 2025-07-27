@@ -1,0 +1,15 @@
+#pragma once
+#define NUM_SIZE_CLASSES 10 //8B, 16B, 32B, 64B, 128B, 256B, 512B, 1024B, 2048B, 4096B
+
+enum SizeClassIndex {
+    SIZE_CLASS_8B = 0,
+    SIZE_CLASS_16B  = 1,
+    SIZE_CLASS_32B  = 2,
+    SIZE_CLASS_64B  = 3,
+    SIZE_CLASS_128B = 4,
+    SIZE_CLASS_256B = 5,
+    SIZE_CLASS_512B = 6,
+    SIZE_CLASS_1024B = 7,
+    SIZE_CLASS_2048B = 8,
+    SIZE_CLASS_4096B = 9
+};
