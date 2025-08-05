@@ -3,6 +3,7 @@
 #include "global.h"
 #include <pthread.h>
 #include <string.h>
+#include <cstdio>
 
 
 
@@ -55,16 +56,16 @@ void TransferList_ReturnBatch(size_t size_class_idx, void** in_batch, int n){
     TransferListSlot* list = &g_transfer_lists[size_class_idx];
 
     int space_available = TRANSFER_LIST_CAPACITY - list->count;
-    int num_to_move = (n < (TRANSFER_LIST_CAPACITY - list->count)) ? n : (TRANSFER_LIST_CAPACITY - list->count);
+    int num_to_move = (n < space_available) ? n : space_available;
 
     if(num_to_move > 0){
         memcpy(&list->objects[list->count], in_batch, num_to_move*sizeof(void*));
         list->count += num_to_move;
     }
 
-    int num_leftover = n - num_to_keep;
+    int num_leftover = n - num_to_move;
     if(num_leftover > 0){
-        CentralFreeList_ReturnBatch(&in_batch[num_to_keep], num_leftover);
+        CentralFreeList_ReturnBatch(&in_batch[num_to_move], num_leftover);
     }
     
     pthread_mutex_unlock(&g_tl_locks[size_class_idx]);

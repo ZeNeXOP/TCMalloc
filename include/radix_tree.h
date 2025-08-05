@@ -1,6 +1,7 @@
 #pragma once 
 #include "span.h"
 #include <stddef.h>
+#include <cstdint>
 
 #define PAGEMAP_L3_BITS 12
 #define PAGEMAP_L3_SIZE (1 << PAGEMAP_L3_BITS)
@@ -20,9 +21,8 @@ typedef struct {
     PageMapNode_L2* children[PAGEMAP_L1_SIZE];
 } PageMap;
 
+extern PageMap g_pagemap;
 
-void PageMap_Init(PageMap* self);
-
-void PageMap_Set(PageMap* self, uintptr_t page_id, Span* span);
-
-Span* PageMap_Get(PageMap* self, uintptr_t page_id);
+void PageMap_Module_Init();
+void PageMap_Set(uintptr_t page_id, Span* span);
+Span* PageMap_Get(uintptr_t page_id);

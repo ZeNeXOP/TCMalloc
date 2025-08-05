@@ -5,6 +5,7 @@
 #include "page_heap.h"
 #include "radix_tree.h"
 #include <stdio.h>
+#include <cstdint>
 
 void* MyMalloc(size_t size){
     size_t sc_idx = SizeMap_GetClass(size); // from utils.h -> utils.c

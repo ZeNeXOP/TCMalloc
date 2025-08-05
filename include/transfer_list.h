@@ -4,7 +4,7 @@
 #define TRANSFER_LIST_CAPACITY 64
 
 typedef struct {
-    void* objects[TRANSFER_LIST_MAX_CAPACITY];
+    void* objects[TRANSFER_LIST_CAPACITY];
     int count;  //Number of valid pointers currently in the 'objects' array
 } TransferListSlot;
 

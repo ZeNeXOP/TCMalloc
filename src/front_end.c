@@ -1,8 +1,10 @@
 #include "front_end.h"
 #include "global.h"
+#include "transfer_list.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <cstring>
 #define STACK_SIZE 64
 
 typedef struct{
@@ -10,7 +12,7 @@ typedef struct{
     int top[NUM_SIZE_CLASSES];
 }PerThreadCache;
 
-static _Thread_local PerThreadCache g_thread_cache = {.top = {0}}; //Array of pointers.
+static thread_local PerThreadCache g_thread_cache = {.top = {0}}; //Array of pointers.
 
 //static void ReturnBatchToTransferList(size_t size_class_idx){Logic to return half the stack to the Transfer List.}
 

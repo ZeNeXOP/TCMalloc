@@ -9,7 +9,7 @@ typedef struct {
 }PageHeap;
 
 
-void PageMap_Module_Init(PageHeap8 self);
+void PageHeap_Init(PageHeap* self);
 
 Span* PageHeap_Allocate(PageHeap* self, size_t num_pages);
 
