@@ -11,5 +11,6 @@ size_t SizeMap_GetClass(size_t size){
     if(size <= 1024) return SIZE_CLASS_1024B;
     if(size <= 2048) return SIZE_CLASS_2048B;
     if(size <= 4096) return SIZE_CLASS_4096B;
+    if(size <= 8192) return SIZE_CLASS_8192B;
     return -1;
 }

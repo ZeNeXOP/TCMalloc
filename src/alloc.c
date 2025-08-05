@@ -2,6 +2,8 @@
 #include "tcmalloc.h"
 #include "front_end.h"
 #include "global.h"
+#include "page_heap.h"
+#include "radix_tree.h"
 #include <stdio.h>
 
 void* MyMalloc(size_t size){
@@ -25,7 +27,12 @@ void* MyMalloc(size_t size){
 void MyFree(void* ptr){
     if(ptr == NULL) return;
 
-    size_t sc_idx = SIZE_CLASS_16B;
+    uintptr_t page_id = (uintptr_t)ptr / kPageSize;
+    Span* span = PageMap_Get(page_id);
+
+    if(span == NULL) return;
+
+    size_t sc_idx = SizeMap_GetClass(span->object_size);
 
     Frontend_Deallocate(ptr,sc_idx);
 }

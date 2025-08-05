@@ -3,56 +3,61 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#define STACK_SIZE 64
 
-static _Thread_local void* g_thread_cache[NUM_SIZE_CLASSES] = {NULL}; //Array of pointers.
+typedef struct{
+    void* stack[NUM_SIZE_CLASSES][STACK_SIZE];
+    int top[NUM_SIZE_CLASSES];
+}PerThreadCache;
+
+static _Thread_local PerThreadCache g_thread_cache = {.top = {0}}; //Array of pointers.
+
+//static void ReturnBatchToTransferList(size_t size_class_idx){Logic to return half the stack to the Transfer List.}
 
 static void RefillCache(size_t size_class_idx){
-    printf("Thread is refilling cache for size class %zu\n",size_class_idx);
-    TransferList_FetchBatch()
-    //placeholder for now
+    PerThreadCache* cache = &g_thread_cache;
+    printf("Thread cache empty. Refilling from Transfer List for size class %zu. \n", size_class_idx);
+
+    const int batch_size_to_fetch = STACK_SIZE/2;
+    void* batch_array[batch_size_to_fetch];
+
+    int num_fetched = TransferList_FetchBatch(size_class_idx, batch_array, batch_size_to_fetch);
+
+    if(num_fetched > 0){
+        memcpy(&cache->stack[size_class_idx][0], batch_array, num_fetched * sizeof(void*));
+        cache->top[size_class_idx] = num_fetched;
+    }
 }
 
 void* Frontend_Allocate(size_t size_class_idx){
-    if(g_thread_cache[size_class_idx] == NULL){
+    PerThreadCache* cache = &g_thread_cache;
+
+    if(cache->top[size_class_idx] == 0){
         RefillCache(size_class_idx);
-        if(g_thread_cache[size_class_idx] == NULL){
+        if(cache->top[size_class_idx] == 0){
             return NULL;
         }
     }
-
-    void* result = g_thread_cache[size_class_idx];
-    g_thread_cache[size_class_idx] = *((void**)result);
-
-    return result;
+    return cache->stack[size_class_idx][--cache->top[size_class_idx]];
 }
 
 void Frontend_Deallocate(void* ptr, size_t size_class_idx){
-    //there is no edge case of overflow like stack would have, considering its a free list 
-    //which takes no space.
-    *((void**)ptr) = g_thread_cache[size_class_idx];
+    PerThreadCache* cache = &g_thread_cache;
 
-    g_thread_cache[size_class_idx] = ptr;
-}
+    if (cache->top[size_class_idx] >= STACK_SIZE){
+        const int num_to_return = STACK_SIZE/2;
+        void** batch_to_return = &cache->stack[size_class_idx][0];
 
+        TransferList_ReturnBatch(size_class_idx, batch_to_return, num_to_return);
 
-
-
-
-/*
-void Frontend_Init_Test_Cache(size_t size_class_idx, size_t object_size, size_t count) {
-    // 1. Allocate a buffer using the system's original malloc.
-    // We use stdlib::malloc to bypass our own override.
-    char* buffer = (char*)malloc(object_size * count);
-    if (!buffer) return;
-
-    // 2. Clear the existing cache for a clean test.
-    g_thread_cache[size_class_idx] = NULL;
-    
-    // 3. Carve the buffer into a linked list of objects.
-    for (size_t i = 0; i < count; ++i) {
-        void* current_obj = buffer + (i * object_size);
-        // Push each fake object onto the stack.
-        Frontend_Deallocate(current_obj, size_class_idx);
+        int remaining = cache->top[size_class_idx] - num_to_return;
+        memmove(&cache->stack[size_class_idx][0], &cache->stack[size_class_idx][num_to_return], remaining * sizeof(void*));
+        cache->top[size_class_idx] = remaining;
     }
+
+    cache->stack[size_class_idx][cache->top[size_class_idx]++] = ptr;
 }
-*/
+
+
+//the functions where transfer list interacts with frontend are 
+//ReturnBatchToTransferList and TransferListFetchBatch.
