@@ -9,6 +9,7 @@
 
 void* MyMalloc(size_t size){
     size_t sc_idx = SizeMap_GetClass(size); // from utils.h -> utils.c
+    printf("Memory requested: %zu", sc_idx);
 
     //Limitation I can think of working on later, how do we handle large size allocations then?
     //we are limited to using 4096Bytes at one moment. its like giving change out of cash lol.
@@ -17,6 +18,7 @@ void* MyMalloc(size_t size){
 
     if (sc_idx != -1) {
         // Small object: handled by the frontend cache.
+        printf("Searching for size class object in Frontend Thread Cache");
         return Frontend_Allocate(sc_idx);
     } else {
         // Large object: will be handled by the PageHeap directly.

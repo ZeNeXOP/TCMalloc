@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <cstring>
+#include "central_free_list.h"
 #define STACK_SIZE 64
 
 typedef struct{
@@ -18,25 +19,29 @@ static thread_local PerThreadCache g_thread_cache = {.top = {0}}; //Array of poi
 
 static void RefillCache(size_t size_class_idx){
     PerThreadCache* cache = &g_thread_cache;
-    printf("Thread cache empty. Refilling from Transfer List for size class %zu. \n", size_class_idx);
 
     const int batch_size_to_fetch = STACK_SIZE/2;
     void* batch_array[batch_size_to_fetch];
 
-    int num_fetched = TransferList_FetchBatch(size_class_idx, batch_array, batch_size_to_fetch);
+    int num_fetched = MiddleTier_FetchFromCache(size_class_idx, batch_array, batch_size_to_fetch);
 
     if(num_fetched > 0){
         memcpy(&cache->stack[size_class_idx][0], batch_array, num_fetched * sizeof(void*));
         cache->top[size_class_idx] = num_fetched;
     }
+    cache = &g_thread_cache; // Get cache again to be safe
+    printf("Frontend: Refill complete. Fetched %d objects. New top is %d.\n", num_fetched, cache->top[size_class_idx]);
 }
 
 void* Frontend_Allocate(size_t size_class_idx){
     PerThreadCache* cache = &g_thread_cache;
 
     if(cache->top[size_class_idx] == 0){
+        printf("Frontend: Thread Cache Empty Requesting Transfer List for batch of objects for size class %zu. \n", size_class_idx);
         RefillCache(size_class_idx);
+        printf("Objects Received: %d", cache->top[size_class_idx]+1);
         if(cache->top[size_class_idx] == 0){
+            printf("Error, Objects not received.");
             return NULL;
         }
     }
@@ -50,7 +55,7 @@ void Frontend_Deallocate(void* ptr, size_t size_class_idx){
         const int num_to_return = STACK_SIZE/2;
         void** batch_to_return = &cache->stack[size_class_idx][0];
 
-        TransferList_ReturnBatch(size_class_idx, batch_to_return, num_to_return);
+        CentralFreeList_ReturnBatch(batch_to_return, num_to_return);
 
         int remaining = cache->top[size_class_idx] - num_to_return;
         memmove(&cache->stack[size_class_idx][0], &cache->stack[size_class_idx][num_to_return], remaining * sizeof(void*));
