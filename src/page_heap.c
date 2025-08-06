@@ -2,10 +2,15 @@
 #include <sys/mman.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "global.h"
+#include <pthread.h>
+
 
 static Span* GetMemoryFromOS(size_t num_pages){
     size_t bytes_to_get = num_pages * kPageSize;
+    pthread_mutex_lock(&g_debug_print_lock);
     printf("PageHeap: Request %zu bytes from OS via mmap. \n", bytes_to_get);
+    pthread_mutex_unlock(&g_debug_print_lock);
 
     void* ptr = mmap(NULL, bytes_to_get, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if(ptr == MAP_FAILED){

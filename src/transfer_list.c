@@ -19,6 +19,7 @@ int TransferList_FetchBatch(TransferListSlot* list, size_t size_class_idx, void*
     return num_to_move;
 }
 
+/*
 void TransferList_ReturnBatch(TransferListSlot* list, size_t size_class_idx, void** in_batch, int n) {
     int space_available = TRANSFER_LIST_CAPACITY - list->count;
     int num_to_move = (n < space_available) ? n : space_available;
@@ -33,3 +34,4 @@ void TransferList_ReturnBatch(TransferListSlot* list, size_t size_class_idx, voi
         CentralFreeList_ReturnBatch(&in_batch[num_to_move], num_leftover);
     }
 }
+    */

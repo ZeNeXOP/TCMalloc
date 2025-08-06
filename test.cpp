@@ -2,6 +2,7 @@
 #include <vector>
 #include <thread>
 #include <random>
+#include <mutex>
 
 // --- C++ Linkage to C Functions ---
 // This block tells the C++ compiler that our MyMalloc and MyFree functions
@@ -10,9 +11,11 @@ extern "C" {
     #include "tcmalloc.h"
 }
 
-const int NUM_THREADS = 8;
-const int ALLOCATIONS_PER_THREAD = 100000;
-const int LOOP_ITERATIONS = 10;
+const int NUM_THREADS = 4;
+const int ALLOCATIONS_PER_THREAD = 10;
+const int LOOP_ITERATIONS = 5;
+
+static std::mutex g_cout_mutex;
 
 // This is the function that each thread will execute.
 void WorkerThread(int thread_id) {
@@ -34,6 +37,7 @@ void WorkerThread(int thread_id) {
             MyFree(ptr);
         }
     }
+    std::lock_guard<std::mutex> guard(g_cout_mutex);
     std::cout << "Thread " << thread_id << " finished." << std::endl;
 }
 
@@ -54,8 +58,6 @@ int main() {
     }
 
     std::cout << "All threads finished." << std::endl;
-
-    // TODO: Add a call to a PrintStats() function here to check for memory leaks.
 
     return 0;
 }

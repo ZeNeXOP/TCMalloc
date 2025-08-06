@@ -39,9 +39,9 @@ void* Frontend_Allocate(size_t size_class_idx){
     if(cache->top[size_class_idx] == 0){
         printf("Frontend: Thread Cache Empty Requesting Transfer List for batch of objects for size class %zu. \n", size_class_idx);
         RefillCache(size_class_idx);
-        printf("Objects Received: %d", cache->top[size_class_idx]+1);
+        printf("Objects Received: %d \n", cache->top[size_class_idx]+1);
         if(cache->top[size_class_idx] == 0){
-            printf("Error, Objects not received.");
+            printf("Error, Objects not received. \n");
             return NULL;
         }
     }
@@ -55,7 +55,7 @@ void Frontend_Deallocate(void* ptr, size_t size_class_idx){
         const int num_to_return = STACK_SIZE/2;
         void** batch_to_return = &cache->stack[size_class_idx][0];
 
-        CentralFreeList_ReturnBatch(batch_to_return, num_to_return);
+        MiddleTier_ReturnToCache(size_class_idx, batch_to_return, num_to_return);
 
         int remaining = cache->top[size_class_idx] - num_to_return;
         memmove(&cache->stack[size_class_idx][0], &cache->stack[size_class_idx][num_to_return], remaining * sizeof(void*));
