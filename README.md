@@ -1,9 +1,9 @@
-# 🚀 A High-Performance, Multi-Threaded Memory Allocator in C/C++
+# A High-Performance, Multi-Threaded Memory Allocator in C/C++
 ## *Inspired by Google's TCMalloc*
 
 ---
 
-## 🧾 Project Overview
+## Project Overview
 
 This project is a **custom high-performance memory allocator** designed for **multi-threaded applications** on POSIX-compliant systems (e.g., Linux, WSL). It is inspired by the architectural principles of **Google's TCMalloc (Thread-Caching Malloc)**.
 
@@ -14,7 +14,7 @@ Its primary goals are:
 
 ---
 
-## 🧠 Core Architectural Principles
+## Core Architectural Principles
 
 - **Hierarchical Caching**  
   Three-tier memory hierarchy: *Front-End*, *Middle-End*, *Back-End*
@@ -30,9 +30,9 @@ Its primary goals are:
 
 ---
 
-## 🏗️ Detailed Architecture
+## Detailed Architecture
 
-### 1️⃣ Front-End: *Per-Thread Cache*
+### 1. Front-End: *Per-Thread Cache*
 
 - **Purpose**: Ultra-fast, lock-free memory reuse  
 - **Implementation**: `thread_local` caches (`PerThreadCache`) with an array of free lists, one per size class  
@@ -43,7 +43,7 @@ Its primary goals are:
 
 ---
 
-### 2️⃣ Middle-End: *Transfer Cache + Central Free List*
+### 2. Middle-End: *Transfer Cache + Central Free List*
 
 - **Transfer Cache (`TransferListSlot`)**  
   - Small global buffer (per size class)  
@@ -57,7 +57,7 @@ Its primary goals are:
 
 ---
 
-### 3️⃣ Back-End: *Page Heap*
+### 3. Back-End: *Page Heap*
 
 - **Purpose**: Interface with OS to allocate large, aligned memory chunks  
 - **Implementation**: Uses `mmap()` for allocation  
@@ -69,9 +69,9 @@ Its primary goals are:
 
 ---
 
-## 📦 Key Data Structures
+## Key Data Structures
 
-### 🧱 Span
+### Span
 
 - Represents a contiguous range of pages
 - Serves only *one* size class
@@ -83,7 +83,7 @@ Its primary goals are:
 
 ---
 
-### 🌲 PageMap (Radix Tree)
+### PageMap (Radix Tree)
 
 - Maps raw object pointers to their corresponding `Span`
 - Allows fast lookup in `MyFree(ptr)`
@@ -91,9 +91,9 @@ Its primary goals are:
 
 ---
 
-## 🔁 Allocation & Deallocation Flow
+## Allocation & Deallocation Flow
 
-### 🟢 **MyMalloc(size)**
+### **MyMalloc(size)**
 
 1. Map size to size class
 2. Try `PerThreadCache` → fast path (no lock)
@@ -107,7 +107,7 @@ Its primary goals are:
 
 ---
 
-### 🔴 **MyFree(ptr)**
+### **MyFree(ptr)**
 
 1. Use `PageMap` to find associated Span
 2. Determine size class from Span
@@ -118,14 +118,14 @@ Its primary goals are:
 
 ---
 
-## 🧪 Build & Testing
+## Build & Testing
 
 - **Languages**: `C`, `C++`
 - **Platform**: Linux / WSL (POSIX)
 - **Compiler**: `gcc` or `g++` with `-pthread`
 - **Test Tool**: `test.cpp` simulates high concurrency
 
-### 🔍 Debugging Tools
+### Debugging Tools
 
 | Tool | Purpose |
 |------|---------|
@@ -134,7 +134,7 @@ Its primary goals are:
 
 ---
 
-## ✅ Features Implemented
+## Features Implemented
 
 - Thread-local caches for fast allocation
 - Transfer caches and central free lists
@@ -144,20 +144,6 @@ Its primary goals are:
 - PageHeap layer using `mmap`
 - Stress-tested for multi-threading
 
----
-
-## ❌ Advanced Features Not Included
-
-| Feature | Reason |
-|--------|--------|
-| Restartable Sequences (RSEQ) | Requires kernel-level support, not portable |
-| Hugepage support | Complex OS interaction, not critical for prototype |
-| Lock-free RCU-style queues | Out of scope for first iteration |
-| Per-object alignment options | Can be added later |
-| Large-object direct mapping | Future enhancement |
-
----
-
 ## 🏁 Conclusion
 
 This project delivers a **functionally complete and performance-conscious memory allocator**, mirroring the internal architecture of TCMalloc. It is suitable for:
@@ -166,9 +152,6 @@ This project delivers a **functionally complete and performance-conscious memory
 - Research into memory allocators  
 - High-performance multi-threaded applications  
 
-> ⚠️ Note: This is a simplified academic/engineering version of TCMalloc. Use with care in production.
-
 ---
-
-## 📂 Directory Structure
+## Directory Structure
 
