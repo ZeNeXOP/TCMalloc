@@ -47,6 +47,10 @@ static Span *AllocateNewSpan(size_t size_class_idx)
     size_t num_objects = kPageSize / object_size;
     size_t num_pages_needed = (num_objects * object_size > kPageSize) ? 2 : 1; // Simplified; adjust as needed
 
+    pthread_mutex_lock(&g_debug_print_lock);
+    printf("[CFL:AllocateNewSpan] Acquiring page heap lock to allocate a new Span for class %zu.\n", size_class_idx);
+    pthread_mutex_unlock(&g_debug_print_lock);
+
     pthread_mutex_lock(&g_page_heap_lock); // Protect entire back-end operation
 
     Span *new_span = PageHeap_Allocate(&g_page_heap, num_pages_needed);
@@ -83,6 +87,9 @@ static Span *AllocateNewSpan(size_t size_class_idx)
     }
 
     pthread_mutex_unlock(&g_page_heap_lock);
+    pthread_mutex_lock(&g_debug_print_lock);
+    printf("[CFL:AllocateNewSpan] Releasing page heap lock. Span allocated at %p.\n", (new_span ? new_span->start_address : NULL));
+    pthread_mutex_unlock(&g_debug_print_lock);
     return new_span;
 }
 
@@ -93,6 +100,9 @@ void CentralFreeList_Init()
 
 int MiddleTier_FetchFromCache(size_t size_class_idx, void **out_batch, int n)
 {
+    pthread_mutex_lock(&g_debug_print_lock);
+    printf("[MiddleTier:Fetch] Acquiring lock for class %zu to fetch %d objects.\n", size_class_idx, n);
+    pthread_mutex_unlock(&g_debug_print_lock);
     // 1. Acquire the single, authoritative lock.
     pthread_mutex_lock(&g_cfl_locks[size_class_idx]);
     // 2. Try to get objects from the TransferList first.
@@ -102,6 +112,9 @@ int MiddleTier_FetchFromCache(size_t size_class_idx, void **out_batch, int n)
     // 3. If the TL didn't have enough, use the CFL to refill the TL.
     if (num_fetched < n)
     {
+        pthread_mutex_lock(&g_debug_print_lock);
+        printf("[MiddleTier:Fetch] Transfer cache miss for class %zu. Trying to refill from Central Free List.\n", size_class_idx);
+        pthread_mutex_unlock(&g_debug_print_lock);
         // How much space is left in the TL?
         int space_available = TRANSFER_LIST_CAPACITY - tl_list->count;
         if (space_available > 0)
@@ -119,12 +132,18 @@ int MiddleTier_FetchFromCache(size_t size_class_idx, void **out_batch, int n)
 
     // 4. Release the lock.
     pthread_mutex_unlock(&g_cfl_locks[size_class_idx]);
+    pthread_mutex_lock(&g_debug_print_lock);
+    printf("[MiddleTier:Fetch] Releasing lock for class %zu. Provided %d objects.\n", size_class_idx, num_fetched);
+    pthread_mutex_unlock(&g_debug_print_lock);
     return num_fetched;
 }
 
 void MiddleTier_ReturnToCache(size_t size_class_idx, void **batch, int n)
 {
     CentralFreeList_Init();
+    pthread_mutex_lock(&g_debug_print_lock);
+    printf("[MiddleTier:Return] Acquiring lock for class %zu to return %d objects.\n", size_class_idx, n);
+    pthread_mutex_unlock(&g_debug_print_lock);
     pthread_mutex_lock(&g_cfl_locks[size_class_idx]);
 
     // Try to place the returned objects in the TransferList first.
@@ -148,6 +167,9 @@ void MiddleTier_ReturnToCache(size_t size_class_idx, void **batch, int n)
     }
 
     pthread_mutex_unlock(&g_cfl_locks[size_class_idx]);
+    pthread_mutex_lock(&g_debug_print_lock);
+    printf("[MiddleTier:Return] Releasing lock for class %zu.\n", size_class_idx);
+    pthread_mutex_unlock(&g_debug_print_lock);
 }
 
 static int CentralFreeList_FetchLargeBatch_Unlocked(size_t size_class_idx, void **out_batch, int n)

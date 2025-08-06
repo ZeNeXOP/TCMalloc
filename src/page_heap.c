@@ -14,7 +14,9 @@ static Span* GetMemoryFromOS(size_t num_pages){
 
     void* ptr = mmap(NULL, bytes_to_get, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if(ptr == MAP_FAILED){
-        perror("mmap failed");
+        pthread_mutex_lock(&g_debug_print_lock);
+        perror("[PageHeap:GetMemory] mmap failed");
+        pthread_mutex_unlock(&g_debug_print_lock);
         return NULL;
     }
 
