@@ -12,6 +12,9 @@ Its primary goals are:
 - Scale efficiently with CPU cores
 - Provide extremely fast allocation/deallocation paths for small objects
 
+Compile: g++ test.cpp src/*.c -o my_program -Iinclude -pthread -std=c++17 -g
+Execute: ./my_program
+
 ---
 
 ## Core Architectural Principles
